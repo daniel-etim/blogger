@@ -8,4 +8,5 @@ urlpatterns = [
     path("greeting/", user.greeting, name="greeting"),
     path("register/", user.register, name="register"),
     path("login/", user.login, name="login"),
+    path("dashboard/", user.dashboard, name="dashboard"),
 ]

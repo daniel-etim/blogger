@@ -1,9 +1,11 @@
 from django.contrib.auth import authenticate
 from django.db import IntegrityError
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from user.models.user import User
 from user.serializers.auth import LoginSerializer, RegisterSerializer
@@ -62,6 +64,21 @@ def login(request: Request):
     if not user:
         return Response(data={"error": "incorrect name or password"}, status=status.HTTP_401_UNAUTHORIZED)
     
+    refresh = RefreshToken.for_user(user)
+    access = refresh.access_token
+    
     # data would have been successfully authenticated by here
     serializer = UserModelSerializer(user)
-    return Response(data={"message": "Login Successful", "data": serializer.data}, status=status.HTTP_200_OK)
+    return Response(data={
+        "message": "Login Successful", 
+        "data": serializer.data,
+        "token": str(refresh),
+        "access": str(access),
+        }, 
+        status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def dashboard(request: Request):
+    user: User = request.user
+    return Response(data={"message": f"Welcome to your dashboard, {user.first_name} {user.last_name}"}, status=status.HTTP_200_OK)
